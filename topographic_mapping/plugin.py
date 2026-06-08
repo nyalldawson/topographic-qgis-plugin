@@ -12,7 +12,7 @@ from .gui import (
     ValidationDock,
     PluginsOptionsFactory,
 )
-from .core import StateManager, ProjectController, StoredObjectManager
+from .core import StateManager, ProjectController, StoredObjectManager, MarkupManager
 
 
 class TopographicMappingPlugin:
@@ -29,6 +29,7 @@ class TopographicMappingPlugin:
         self._project_controller: ProjectController | None = None
         self._menu: QMenu | None = None
         self._options_factory: PluginsOptionsFactory | None = None
+        self._markup_manager: MarkupManager | None = None
 
     def initGui(self) -> None:
         self._project_controller = ProjectController(
@@ -92,6 +93,8 @@ class TopographicMappingPlugin:
         self.options_factory.setTitle("TopoMapping")
         self.iface.registerOptionsWidgetFactory(self.options_factory)
 
+        self._markup_manager = MarkupManager(self._gui_owner)
+
     def unload(self) -> None:
         """Removes the plugin menu item and icon from QGIS GUI."""
         self._tool_registry.unregister_shortcuts()
@@ -121,6 +124,9 @@ class TopographicMappingPlugin:
         if self._state_manager:
             self._state_manager.deleteLater()
             self._state_manager = None
+        if self._markup_manager:
+            self._markup_manager.deleteLater()
+            self._markup_manager = None
 
         QgsSettingsTree.unregisterPluginTreeNode("topographic_mapping")
 
