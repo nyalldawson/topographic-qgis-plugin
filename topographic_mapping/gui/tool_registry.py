@@ -1,3 +1,4 @@
+from enum import Enum, auto
 from collections import defaultdict
 from dataclasses import dataclass
 
@@ -47,8 +48,35 @@ class DigitizeTechniqueAction:
     description: str
 
 
+class PluginTool(Enum):
+    """
+    Enum representing inbuilt (plugin specific) tools
+    """
+
+    MarkupSelected = auto()
+    GoToNextMarkup = auto()
+    GoToPreviousMarkup = auto()
+    ToggleSelectedMarkup = auto()
+    DeleteCheckedMarkup = auto()
+    ClearMarkup = auto()
+    ReconsiderMarkup = auto()
+
+
+@dataclass
+class PluginAction:
+    """
+    An action for an inbuilt (plugin specific) tool
+    """
+
+    title: str
+    plugin_tool: PluginTool
+    icon: str
+    description: str
+
+
 EDITING_GROUP = "Topographic editing"
 DIGITIZING_GROUP = "Digitize feature"
+MARKUP_GROUP = "Markup"
 
 TOOLS = {
     EDITING_GROUP: [
@@ -139,6 +167,26 @@ TOOLS = {
             "Digitize features immediately as mouse moves.",
         ),
     ],
+    MARKUP_GROUP: [
+        PluginAction(
+            "Markup Selected Features",
+            PluginTool.MarkupSelected,
+            "duplicate.svg",
+            "Creates markups for all selected features.",
+        ),
+        PluginAction(
+            "Goto Next Markup",
+            PluginTool.GoToNextMarkup,
+            "duplicate.svg",
+            "Navigate to the next markup.",
+        ),
+        PluginAction(
+            "Goto Previous Markup",
+            PluginTool.GoToPreviousMarkup,
+            "duplicate.svg",
+            "Navigate to the previous markup.",
+        ),
+    ],
 }
 
 
@@ -176,6 +224,8 @@ class ToolRegistry(QObject):
                     self._process_compound_action(action, group, iface)
                 elif isinstance(action, DigitizeTechniqueAction):
                     self._process_digitize_technique_action(action, group, iface)
+                elif isinstance(action, PluginAction):
+                    self._process_plugin_action(action, group, iface)
                 else:
                     assert False
 
@@ -246,6 +296,21 @@ class ToolRegistry(QObject):
         assert action.description[0].isupper()
         proxy_action.setProperty("description", action.description)
         self._actions[group].append(proxy_action)
+
+    def _process_plugin_action(
+        self, action: PluginAction, group: str, iface: QgisInterface
+    ):
+        tool_action = QAction(parent=self)
+        tool_action.setText(action.title)
+
+        tool_action.setObjectName(ToolRegistry.title_to_object_name(action.title))
+        tool_action.setCheckable(True)  # TODO
+        tool_action.setIcon(GuiUtils.get_colorized_icon(action.icon))
+
+        assert action.description[-1] == "."
+        assert action.description[0].isupper()
+        tool_action.setProperty("description", action.description)
+        self._actions[group].append(tool_action)
 
     def populate_tool_dock(self, dock: ToolDock):
         for group, actions in self._actions.items():
