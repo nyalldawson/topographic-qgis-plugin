@@ -183,10 +183,10 @@ class ToolDock(QgsDockWidget):
         group_box.setLayout(group_box_layout)
 
         if is_digitizing_group:
-            insert_index = self._vlayout.count() - 2
+            before = self._digitize_description_label
         else:
-            insert_index = self._vlayout.count() - 4
-        self._vlayout.insertWidget(insert_index, group_box)
+            before = self._description_label
+        self._vlayout.insertWidget(self._vlayout.indexOf(before), group_box)
         group_widget = ResponsiveTableWidget()
         group_box_layout.addWidget(group_widget)
         self._tool_groups[group_title] = group_widget
